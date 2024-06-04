@@ -1,6 +1,10 @@
+"use client"
+import Live from "@/components/Live";
 
 export default function Page() {
   return (
-    <h1 className="font-extrabold">HI</h1>
+    <div>
+      <Live />
+    </div>
   );
 }
