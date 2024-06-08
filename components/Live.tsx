@@ -1,13 +1,16 @@
-import { useMyPresence, useOthers } from '@/liveblocks.config'
+import { useBroadcastEvent, useEventListener, useMyPresence, useOthers } from '@/liveblocks.config'
 import LiveCursors from './cursor/LiveCursors'
 import { useCallback, useEffect, useState } from 'react'
 import CursorChat from './cursor/CursorChat'
-import { CursorMode, CursorState, Reaction } from '@/types/type'
+import { CursorMode, CursorState, Reaction, ReactionEvent } from '@/types/type'
 import ReactionSelector from './reaction/ReactionButton'
+import FlyingReaction from './reaction/FlyingReaction'
+import useInterval from '@/hooks/useInterval'
 
 const Live = () => {
   const others = useOthers()
   const [{ cursor }, updateMyPresence] = useMyPresence()
+  const broadcast = useBroadcastEvent();
   const [cursorState, setCursorState] = useState<CursorState>({
     mode: CursorMode.Hidden,
   })
@@ -17,6 +20,32 @@ const Live = () => {
   const setReaction = useCallback((reaction: string) => {
     setCursorState({ mode: CursorMode.Reaction, reaction, isPressed: false })
   }, [])
+
+  // 每过100ms收集Reaction,并且在鼠标按下是收集,并且广播给其他人
+  useInterval(() => {
+    if (cursorState.mode === CursorMode.Reaction && cursorState.isPressed && cursor) {
+      // 收集Reaction
+      setReactions((reactions) => reactions.concat([{
+        point: { x: cursor.x, y: cursor.y },
+        value: cursorState.reaction,
+        timestamp: Date.now()
+      }]))
+
+      // 广播
+      broadcast({
+        x: cursor.x,
+        y: cursor.y,
+        value: cursorState.reaction,
+      });
+    }
+  }, 100)
+
+  // Remove reactions that are not visible anymore (every 1 sec)
+  useInterval(() => {
+    setReactions((reactions) =>
+      reactions.filter((reaction) => reaction.timestamp > Date.now() - 4000)
+    );
+  }, 1000);
 
   // 处理实时光标位置
   const handlePointerMove = useCallback((event: React.PointerEvent) => {
@@ -85,6 +114,21 @@ const Live = () => {
       window.removeEventListener('keydown', onKeyDown)
     }
   }, [updateMyPresence])
+
+  // 其他人的实时Reaction收集，被广播后触发
+  useEventListener((eventData) => {
+    // ReactionEvent
+    const event = eventData.event
+    setReactions((reactions) =>
+      reactions.concat([
+        {
+          point: { x: event.x, y: event.y },
+          value: event.value,
+          timestamp: Date.now(),
+        },
+      ])
+    );
+  });
   return (
     <div
       className="flex h-screen w-full items-center justify-center text-center"
@@ -94,6 +138,17 @@ const Live = () => {
       onPointerUp={handlePointerUp}
     >
       <h1 className="text-2xl text-white">Live Blocks</h1>
+      {reactions.map((reaction) => {
+        return (
+          <FlyingReaction
+            key={reaction.timestamp.toString()}
+            x={reaction.point.x}
+            y={reaction.point.y}
+            timestamp={reaction.timestamp}
+            value={reaction.value}
+          />
+        );
+      })}
       {cursor && (
         <CursorChat
           cursor={cursor}
@@ -102,7 +157,7 @@ const Live = () => {
           updateMyPresence={updateMyPresence}
         />
       )}
-      {cursorState.mode === CursorMode.ReactionSelector && (
+      {cursor && cursorState.mode === CursorMode.ReactionSelector && (
         <ReactionSelector
           cursor={cursor}
           setReaction={(reaction) => {
@@ -110,8 +165,10 @@ const Live = () => {
           }}
         />
       )}
-      {cursorState.mode === CursorMode.Reaction && (
-        <div className="pointer-events-none absolute top-3.5 left-1 select-none">
+      {cursor && cursorState.mode === CursorMode.Reaction && (
+        <div className="pointer-events-none absolute top-3.5 left-1 select-none" style={{
+          transform: `translateX(${cursor.x + 4}px) translateY(${cursor.y + 4}px)`,
+        }}>
           {cursorState.reaction}
         </div>
       )}

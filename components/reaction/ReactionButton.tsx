@@ -19,7 +19,7 @@ export default function ReactionSelector({ setReaction, cursor }: Props) {
   return (
     <div
       ref={divRef}
-      className='fixed top-0 left-0 rounded-full bg-white px-2'
+      className='absolute top-0 left-0 rounded-full bg-white px-2'
       style={{
         boxShadow:
           '0 0 0 0.5px rgba(0, 0, 0, 0.08), 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
