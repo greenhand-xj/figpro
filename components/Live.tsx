@@ -7,7 +7,11 @@ import ReactionSelector from './reaction/ReactionButton'
 import FlyingReaction from './reaction/FlyingReaction'
 import useInterval from '@/hooks/useInterval'
 
-const Live = () => {
+type Props = {
+  canvasRef: React.MutableRefObject<HTMLCanvasElement | null>
+}
+
+const Live = ({ canvasRef }: Props) => {
   const others = useOthers()
   const [{ cursor }, updateMyPresence] = useMyPresence()
   const broadcast = useBroadcastEvent();
@@ -131,13 +135,16 @@ const Live = () => {
   });
   return (
     <div
+      id="canvas"
       className="flex h-screen w-full items-center justify-center text-center"
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       onPointerDown={handlePointerDown}
       onPointerUp={handlePointerUp}
     >
-      <h1 className="text-2xl text-white">Live Blocks</h1>
+      <canvas ref={canvasRef} />
+
+
       {reactions.map((reaction) => {
         return (
           <FlyingReaction
