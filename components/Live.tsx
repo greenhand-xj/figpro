@@ -62,14 +62,11 @@ const Live = ({ canvasRef }: Props) => {
     }
   }, [cursor, cursorState, updateMyPresence])
   const handlePointerLeave = useCallback((event: React.PointerEvent) => {
-    // console.log('event-leave', event)
-    // event.preventDefault()
     setCursorState({ mode: CursorMode.Hidden })
     updateMyPresence({ cursor: null, message: null })
   }, [updateMyPresence])
 
   const handlePointerDown = useCallback((event: React.PointerEvent) => {
-    // console.log('event-down', event)
     const { clientX, clientY, currentTarget } = event
     const x = clientX - currentTarget.getBoundingClientRect().x
     const y = clientY - currentTarget.getBoundingClientRect().y
@@ -136,7 +133,7 @@ const Live = ({ canvasRef }: Props) => {
   return (
     <div
       id="canvas"
-      className="flex h-screen w-full items-center justify-center text-center"
+      className="flex h-screen w-full items-center justify-center text-center relative"
       onPointerMove={handlePointerMove}
       onPointerLeave={handlePointerLeave}
       onPointerDown={handlePointerDown}

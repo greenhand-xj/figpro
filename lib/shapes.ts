@@ -6,9 +6,12 @@ import {
   ElementDirection,
   ImageUpload,
   ModifyShape,
+  Pointer,
+  ShapeType,
+  SpecificShapeType,
 } from "@/types/type";
 
-export const createRectangle = (pointer: PointerEvent) => {
+export const createRectangle = (pointer: Pointer) => {
   const rect = new fabric.Rect({
     left: pointer.x,
     top: pointer.y,
@@ -21,7 +24,7 @@ export const createRectangle = (pointer: PointerEvent) => {
   return rect;
 };
 
-export const createTriangle = (pointer: PointerEvent) => {
+export const createTriangle = (pointer: Pointer) => {
   return new fabric.Triangle({
     left: pointer.x,
     top: pointer.y,
@@ -32,7 +35,7 @@ export const createTriangle = (pointer: PointerEvent) => {
   } as CustomFabricObject<fabric.Triangle>);
 };
 
-export const createCircle = (pointer: PointerEvent) => {
+export const createCircle = (pointer: Pointer) => {
   return new fabric.Circle({
     left: pointer.x,
     top: pointer.y,
@@ -42,7 +45,7 @@ export const createCircle = (pointer: PointerEvent) => {
   } as any);
 };
 
-export const createLine = (pointer: PointerEvent) => {
+export const createLine = (pointer: Pointer) => {
   return new fabric.Line(
     [pointer.x, pointer.y, pointer.x + 100, pointer.y + 100],
     {
@@ -53,7 +56,7 @@ export const createLine = (pointer: PointerEvent) => {
   );
 };
 
-export const createText = (pointer: PointerEvent, text: string) => {
+export const createText = (pointer: Pointer, text: string) => {
   return new fabric.IText(text, {
     left: pointer.x,
     top: pointer.y,
@@ -65,30 +68,24 @@ export const createText = (pointer: PointerEvent, text: string) => {
   } as fabric.ITextOptions);
 };
 
-export const createSpecificShape = (
-  shapeType: string,
-  pointer: PointerEvent
-) => {
-  switch (shapeType) {
-    case "rectangle":
-      return createRectangle(pointer);
 
-    case "triangle":
-      return createTriangle(pointer);
+// 工厂模式（Factory Pattern）： 工厂模式是一种创建型设计模式，其目的是封装实例化过程。在优化后的代码中，createShape 函数扮演了工厂的角色，它根据输入的 shapeType 创建并返回相应的形状对象。这里，工厂函数隐藏了创建对象的复杂性，并向调用者提供了一个统一的接口。
 
-    case "circle":
-      return createCircle(pointer);
+// 字典/映射模式： 虽然这不是一个正式的设计模式名称，但使用对象字面量作为映射（shapeCreators 对象）是一种常见的编程实践，用于存储键值对。这种模式特别适用于工厂模式中，因为它允许快速查找和调用与特定键关联的函数，从而替代了传统的 switch 或 if...else 结构，提高了代码的可读性和维护性。
 
-    case "line":
-      return createLine(pointer);
-
-    case "text":
-      return createText(pointer, "Tap to Type");
-
-    default:
-      return null;
-  }
+const shapeCreators: Record<SpecificShapeType, (pointer: Pointer) => any> = {
+  rectangle: createRectangle,
+  triangle: createTriangle,
+  circle: createCircle,
+  line: createLine,
+  text: (pointer: Pointer) => createText(pointer, "Tap to Type"),
 };
+
+export function createSpecificShape(shapeType: SpecificShapeType, pointer: Pointer): any {
+  const creator = shapeCreators[shapeType];
+  if (!creator) return null
+  return creator(pointer);
+}
 
 export const handleImageUpload = ({
   file,
@@ -121,14 +118,14 @@ export const handleImageUpload = ({
 export const createShape = (
   canvas: fabric.Canvas,
   pointer: PointerEvent,
-  shapeType: string
+  shapeType: ShapeType
 ) => {
-  if (shapeType === "freeform") {
+  if (shapeType === 'freeform') {
     canvas.isDrawingMode = true;
     return null;
   }
 
-  return createSpecificShape(shapeType, pointer);
+  return createSpecificShape(shapeType as SpecificShapeType, pointer);
 };
 
 export const modifyShape = ({
@@ -145,7 +142,7 @@ export const modifyShape = ({
   // if  property is width or height, set the scale of the selected element
   if (property === "width") {
     selectedElement.set("scaleX", 1);
-    selectedElement.set("width", value);  
+    selectedElement.set("width", value);
   } else if (property === "height") {
     selectedElement.set("scaleY", 1);
     selectedElement.set("height", value);

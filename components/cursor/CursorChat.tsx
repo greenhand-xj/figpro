@@ -35,7 +35,7 @@ const CursorChat = ({ cursor, cursorState, setCursorState, updateMyPresence }: C
             {cursorState.previousMessage && (
               <div>{cursorState.previousMessage}</div>
             )}
-            <input className="z-10 w-60 border-none bg-transparent text-white placeholder-blue-300 outline-none" autoFocus={true} onChange={handleChange} onKeyDown={handleKeyDown} placeholder={cursorState.previousMessage ? '' : '输入一些文字吧...'} maxLength={50} value={cursorState.message} />
+            <input className="z-10 w-60 border-none bg-transparent text-white placeholder-blue-300 outline-none" autoFocus={true} onChange={handleChange} onKeyDown={handleKeyDown} onKeyUp={(e) => e.stopPropagation()} placeholder={cursorState.previousMessage ? '' : '输入一些文字吧...'} maxLength={50} value={cursorState.message} />
           </div>
         </>
       )}

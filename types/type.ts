@@ -10,21 +10,21 @@ export enum CursorMode {
 
 export type CursorState =
   | {
-      mode: CursorMode.Hidden;
-    }
+    mode: CursorMode.Hidden;
+  }
   | {
-      mode: CursorMode.Chat;
-      message: string;
-      previousMessage: string | null;
-    }
+    mode: CursorMode.Chat;
+    message: string;
+    previousMessage: string | null;
+  }
   | {
-      mode: CursorMode.ReactionSelector;
-    }
+    mode: CursorMode.ReactionSelector;
+  }
   | {
-      mode: CursorMode.Reaction;
-      reaction: string;
-      isPressed: boolean;
-    };
+    mode: CursorMode.Reaction;
+    reaction: string;
+    isPressed: boolean;
+  };
 
 export type Reaction = {
   value: string;
@@ -60,14 +60,22 @@ export type Attributes = {
 
 export type ActiveElement = {
   name: string;
-  value: string;
+  value: string | ActiveElement[];
   icon: string;
-} | null;
+};
 
+export type MustBeArrayActiveElement = Omit<ActiveElement, 'value'> & {
+  value: ActiveElement[];
+}
 export interface CustomFabricObject<T extends fabric.Object>
   extends fabric.Object {
   objectId?: string;
 }
+
+export type ShapeType = "rectangle" | "triangle" | "circle" | "line" | "text" | 'freeform' | 'select'
+
+export type SpecificShapeType = Exclude<ShapeType, 'freeform' | 'select'>
+export type Pointer = { x: number; y: number };
 
 export type ModifyShape = {
   canvas: fabric.Canvas;
@@ -110,9 +118,9 @@ export type ShapesMenuProps = {
   item: {
     name: string;
     icon: string;
-    value: Array<ActiveElement>;
+    value: ActiveElement[];
   };
-  activeElement: any;
+  activeElement: ActiveElement;
   handleActiveElement: any;
   handleImageUpload: any;
   imageInputRef: any;
@@ -127,7 +135,7 @@ export type LiveCursorProps = {
 export type CanvasMouseDown = {
   options: fabric.IEvent;
   canvas: fabric.Canvas;
-  selectedShapeRef: any;
+  selectedShapeRef: React.MutableRefObject<ShapeType>;
   isDrawing: React.MutableRefObject<boolean>;
   shapeRef: React.MutableRefObject<fabric.Object | null>;
 };

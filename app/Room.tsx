@@ -6,7 +6,7 @@ import { ClientSideSuspense } from "@liveblocks/react";
 
 export function Room({ children }: { children: ReactNode }) {
   return (
-    <RoomProvider id="my-room" initialPresence={{}}>
+    <RoomProvider id="my-room" initialPresence={{ cursor: null, message: null }}>
       <ClientSideSuspense fallback={<div>Loading…</div>}>
         {() => children}
       </ClientSideSuspense>
