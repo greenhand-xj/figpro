@@ -9,7 +9,11 @@ import {
   CanvasObjectScaling,
   CanvasPathCreated,
   CanvasSelectionCreated,
+  Pointer,
   RenderCanvas,
+  ShapeProperties,
+  ShapePropertiesType,
+  ShapeType,
 } from "@/types/type";
 import { defaultNavElement } from "@/constants";
 import { createSpecificShape } from "./shapes";
@@ -86,6 +90,7 @@ export const handleCanvasMouseDown = ({
     target.setCoords();
   } else {
     if (selectedShapeRef.current === 'select') return
+    if (selectedShapeRef.current === 'image') return
     isDrawing.current = true;
 
     // create custom fabric object/shape and set it to shapeRef
@@ -102,8 +107,35 @@ export const handleCanvasMouseDown = ({
   }
 };
 
+const shapeProperties: ShapeProperties = {
+  rectangle: (shapeRef, pointer) => shapeRef.current?.set({
+    width: pointer.x - (shapeRef.current?.left || 0),
+    height: pointer.y - (shapeRef.current?.top || 0),
+  }),
+  circle: (shapeRef, pointer) => shapeRef.current?.set({
+    radius: Math.abs(pointer.x - (shapeRef.current?.left || 0)) / 2,
+  } as fabric.ICircleOptions),
+  triangle: (shapeRef, pointer) => shapeRef.current?.set({
+    width: pointer.x - (shapeRef.current?.left || 0),
+    height: pointer.y - (shapeRef.current?.top || 0),
+  }),
+  line: (shapeRef, pointer) => shapeRef.current?.set({
+    x2: pointer.x,
+    y2: pointer.y,
+  } as fabric.ILineOptions),
+  image: (shapeRef, pointer) => shapeRef.current?.set({
+    width: pointer.x - (shapeRef.current?.left || 0),
+    height: pointer.y - (shapeRef.current?.top || 0),
+  })
+};
+
+const updateShape = (shapeRef: CanvasMouseMove['shapeRef'], selectedShapeRef: CanvasMouseMove['selectedShapeRef'], pointer: Pointer) => {
+  if (shapeRef.current && selectedShapeRef.current in shapeProperties) {
+    shapeProperties[selectedShapeRef.current as ShapePropertiesType](shapeRef, pointer)
+  }
+};
 // handle mouse move event on canvas to draw shapes with different dimensions
-export const handleCanvaseMouseMove = ({
+export const handleCanvasMouseMove = ({
   options,
   canvas,
   isDrawing,
@@ -122,43 +154,7 @@ export const handleCanvaseMouseMove = ({
 
   // depending on the selected shape, set the dimensions of the shape stored in shapeRef in previous step of handelCanvasMouseDown
   // calculate shape dimensions based on pointer coordinates
-  switch (selectedShapeRef?.current) {
-    case "rectangle":
-      shapeRef.current?.set({
-        width: pointer.x - (shapeRef.current?.left || 0),
-        height: pointer.y - (shapeRef.current?.top || 0),
-      });
-      break;
-
-    case "circle":
-      shapeRef.current.set({
-        radius: Math.abs(pointer.x - (shapeRef.current?.left || 0)) / 2,
-      });
-      break;
-
-    case "triangle":
-      shapeRef.current?.set({
-        width: pointer.x - (shapeRef.current?.left || 0),
-        height: pointer.y - (shapeRef.current?.top || 0),
-      });
-      break;
-
-    case "line":
-      shapeRef.current?.set({
-        x2: pointer.x,
-        y2: pointer.y,
-      });
-      break;
-
-    case "image":
-      shapeRef.current?.set({
-        width: pointer.x - (shapeRef.current?.left || 0),
-        height: pointer.y - (shapeRef.current?.top || 0),
-      });
-
-    default:
-      break;
-  }
+  updateShape(shapeRef, selectedShapeRef, pointer);
 
   // render objects on canvas
   // renderAll: http://fabricjs.com/docs/fabric.Canvas.html#renderAll
@@ -184,7 +180,7 @@ export const handleCanvasMouseUp = ({
   if (selectedShapeRef.current === "freeform") return;
 
   // sync shape in storage as drawing is stopped
-  syncShapeInStorage(shapeRef.current);
+  syncShapeInStorage(shapeRef.current!);
 
   // set everything to null
   shapeRef.current = null;

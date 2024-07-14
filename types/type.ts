@@ -1,4 +1,4 @@
-import { BaseUserMeta, User } from "@liveblocks/client";
+import { BaseUserMeta, LiveMap, User } from "@liveblocks/client";
 import { Gradient, Pattern } from "fabric/fabric-impl";
 
 export enum CursorMode {
@@ -67,15 +67,17 @@ export type ActiveElement = {
 export type MustBeArrayActiveElement = Omit<ActiveElement, 'value'> & {
   value: ActiveElement[];
 }
-export interface CustomFabricObject<T extends fabric.Object>
+export interface CustomFabricObject<T extends fabric.Object = fabric.Object>
   extends fabric.Object {
   objectId?: string;
 }
 
-export type ShapeType = "rectangle" | "triangle" | "circle" | "line" | "text" | 'freeform' | 'select'
+export type ShapeType = "rectangle" | "triangle" | "circle" | "line" | "text" | 'freeform' | 'select' | 'image';
 
-export type SpecificShapeType = Exclude<ShapeType, 'freeform' | 'select'>
+export type SpecificShapeType = Exclude<ShapeType, 'freeform' | 'select' | 'image'>
 export type Pointer = { x: number; y: number };
+export type ShapePropertiesType = Exclude<ShapeType, 'select' | 'text' | 'freeform'>
+export type ShapeProperties = Record<ShapePropertiesType, (shapeRef: CanvasMouseMove['shapeRef'], pointer: Pointer) => any>;
 
 export type ModifyShape = {
   canvas: fabric.Canvas;
@@ -144,19 +146,19 @@ export type CanvasMouseMove = {
   options: fabric.IEvent;
   canvas: fabric.Canvas;
   isDrawing: React.MutableRefObject<boolean>;
-  selectedShapeRef: any;
-  shapeRef: any;
+  selectedShapeRef: React.MutableRefObject<ShapeType>;
+  shapeRef: React.MutableRefObject<CustomFabricObject | null>;
   syncShapeInStorage: (shape: fabric.Object) => void;
 };
 
 export type CanvasMouseUp = {
   canvas: fabric.Canvas;
   isDrawing: React.MutableRefObject<boolean>;
-  shapeRef: any;
-  activeObjectRef: React.MutableRefObject<fabric.Object | null>;
-  selectedShapeRef: any;
+  shapeRef: React.MutableRefObject<CustomFabricObject | null>;
+  activeObjectRef: React.MutableRefObject<CustomFabricObject | null>;
+  selectedShapeRef: React.MutableRefObject<ShapeType | null>;
   syncShapeInStorage: (shape: fabric.Object) => void;
-  setActiveElement: any;
+  setActiveElement: React.Dispatch<React.SetStateAction<ActiveElement>>;
 };
 
 export type CanvasObjectModified = {
@@ -182,8 +184,8 @@ export type CanvasObjectScaling = {
 
 export type RenderCanvas = {
   fabricRef: React.MutableRefObject<fabric.Canvas | null>;
-  canvasObjects: any;
-  activeObjectRef: any;
+  canvasObjects: ReadonlyMap<string, CustomFabricObject & { [key: string]: any }>;
+  activeObjectRef: React.MutableRefObject<CustomFabricObject | null>;
 };
 
 export type CursorChatProps = {

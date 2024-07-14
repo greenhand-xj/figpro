@@ -1,5 +1,6 @@
-import { createClient } from "@liveblocks/client";
+import { LiveMap, LiveObject, createClient } from "@liveblocks/client";
 import { createRoomContext, createLiveblocksContext } from "@liveblocks/react";
+import { CustomFabricObject } from "./types/type";
 
 const client = createClient({
   publicApiKey: process.env.NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY!,
@@ -53,6 +54,8 @@ const client = createClient({
 type Presence = {
   cursor: { x: number, y: number } | null,
   message: string | null,
+  cursorColor: string | null,
+  editingText: string | null
   // ...
 };
 
@@ -63,6 +66,7 @@ type Presence = {
 type Storage = {
   // author: LiveObject<{ firstName: string, lastName: string }>,
   // ...
+  canvasObjects: LiveMap<string, CustomFabricObject & { [key: string]: any }>
 };
 
 // Optionally, UserMeta represents static/readonly metadata on each user, as

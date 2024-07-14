@@ -73,12 +73,12 @@ export const createText = (pointer: Pointer, text: string) => {
 
 // 字典/映射模式： 虽然这不是一个正式的设计模式名称，但使用对象字面量作为映射（shapeCreators 对象）是一种常见的编程实践，用于存储键值对。这种模式特别适用于工厂模式中，因为它允许快速查找和调用与特定键关联的函数，从而替代了传统的 switch 或 if...else 结构，提高了代码的可读性和维护性。
 
-const shapeCreators: Record<SpecificShapeType, (pointer: Pointer) => any> = {
+const shapeCreators: Record<SpecificShapeType, (pointer: Pointer) => fabric.Object> = {
   rectangle: createRectangle,
   triangle: createTriangle,
   circle: createCircle,
   line: createLine,
-  text: (pointer: Pointer) => createText(pointer, "Tap to Type"),
+  text: (pointer: Pointer): fabric.IText => createText(pointer, "Tap to Type"),
 };
 
 export function createSpecificShape(shapeType: SpecificShapeType, pointer: Pointer): any {
