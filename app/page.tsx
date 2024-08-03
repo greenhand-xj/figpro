@@ -3,20 +3,23 @@ import LeftSideBar from "@/components/LeftSidebar";
 import Live from "@/components/Live";
 import Navbar from "@/components/Navbar";
 import RightSideBar from "@/components/RightSidebar";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { type fabric } from 'fabric'
 import { handleCanvasMouseDown, handleCanvasMouseMove, handleCanvasMouseUp, handleCanvasObjectModified, handleResize, initializeFabric, renderCanvas } from "@/lib/canvas";
 import { ActiveElement, CustomFabricObject, ShapeData, ShapeType } from "@/types/type";
 import { useMutation, useStorage } from "@/liveblocks.config";
+import { defaultNavElement } from "@/constants";
+import { handleDelete } from "@/lib/key-events";
 
 export default function Page() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const fabricRef = useRef<fabric.Canvas | null>(null);
   const isDrawing = useRef(false);
   const shapeRef = useRef<fabric.Object | null>(null);
-  const selectedShapeRef = useRef<ShapeType>('rectangle');
+  const selectedShapeRef = useRef<ShapeType>('select');
   const activeObjectRef = useRef<CustomFabricObject | null>(null);
   const canvasObjects = useStorage(root => root.canvasObjects)
+  // sync shape in liveblocks storage
   const syncShapeInStorage = useMutation(({ storage }, object: CustomFabricObject) => {
     if (!object) return
     const { objectId } = object
@@ -30,10 +33,37 @@ export default function Page() {
     value: '',
     icon: ''
   });
-  const handleActiveElement = (ele: ActiveElement) => {
+
+  const deleteAllShapes = useMutation(({ storage }) => {
+    const canvasObjects = storage.get('canvasObjects')
+    if (!canvasObjects || canvasObjects.size === 0) return true
+
+    for (const [key, value] of canvasObjects.entries()) {
+      canvasObjects.delete(key)
+    }
+    return canvasObjects.size === 0
+  }, [])
+  const deleteShapeFromStorage = useMutation(({ storage }, objectId: string) => {
+    const canvasObjects = storage.get('canvasObjects')
+    if (!canvasObjects || canvasObjects.size === 0) return true
+    canvasObjects.delete(objectId)
+  }, [])
+  const handleActiveElement = useCallback((ele: ActiveElement) => {
     setActiveElement(ele)
+    switch (ele.value) {
+      case 'reset':
+        deleteAllShapes()
+        fabricRef.current?.clear()
+        setActiveElement(defaultNavElement)
+        break;
+      case 'delete':
+        handleDelete(fabricRef.current!, deleteShapeFromStorage)
+        setActiveElement(defaultNavElement)
+      default:
+        break;
+    }
     selectedShapeRef.current = ele.value as ShapeType
-  }
+  }, [])
 
   useEffect(() => {
     // initialize fabric canvas
@@ -76,8 +106,13 @@ export default function Page() {
     window.addEventListener('resize', () => {
       handleResize({ canvas: fabricRef.current })
     })
+
+    return () => {
+      canvas.dispose()
+    }
   }, [])
 
+  // useStorage hook 不停的监听the canvas objects
   useEffect(() => {
     if (!canvasObjects) return
     renderCanvas({
